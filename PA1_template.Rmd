@@ -8,18 +8,65 @@ output:
 
 ## Loading and preprocessing the data
 
+We load the .csv file into R
 
+```{r}
+data <- read.csv("activity.csv", as.is=TRUE)
+```
+We take a look at the file to check if we need to clean something.
+```{r, echo=TRUE}
+summary(data)
+head(data)
+```
+We observe that the data is already stored in a clean and tidy way, so the only thing we need to do is to convert the date column to a more useful type:
+```{r}
+data$date <- as.Date(data$date)
+```
 
 ## What is mean total number of steps taken per day?
 
-
+We will get an idea of the distribution of the activity over the whole period by plotting a histogram of the stepscounts of each day.
+```{r}
+hist(tapply(data$steps, data$date, sum, na.rm=TRUE), 25, c="red")
+```
+We now obtain the mean and median of the stepcounts for each day:
+```{r}
+dailymean = tapply(data$steps, data$date, mean, na.rm=TRUE)
+dailymedian = tapply(data$steps, data$date, function(d) median(unique(d)))
+```
 
 ## What is the average daily activity pattern?
 
-
+Now we observe the pattern the activity follows each day. 
+```{r}
+intervalmean = tapply(data$steps, data$interval, mean, na.rm=TRUE)
+plot(intervalmean, 1:288)
+```
+We find also the time interval with the higher stepcount:
+```{r}
+intervalmean[which(intervalmean==max(intervalmean))]
+```
 
 ## Imputing missing values
 
-
+As previously mentioned, we will perform our analysis first on the raw data and then in a new dataset without missing values. Therefore, we will construct a new collection replacing each NA value with the mean number steps taken in that same 5 minute interval.
+```{r}
+NAvalues = which(is.na(data$steps))
+intervalmean<-tapply(data$steps, data$interval, mean, na.rm=TRUE)
+data2[NAvalues,]$steps <- intervalmean[data2[NAvalues,]$interval]
+```
+Now, if we have a look at the list of stepcounts that were missing in the original dataset we see that they have been substitued by the corresponding means:
+```{r}
+head(data[which(is.na(data$steps)),])
+head(data2[which(is.na(data$steps)),])
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+We add another variable to our dataset with a factor indicating if the date is a weekday or a weekend
+```{r}
+data$daytype = as.factor(ifelse(weekdays(data$date) %in% c("Samstag", "Sonntag"), "weekend", "weekday"))
+```
+Now we plot two different graphs
+```{r}
+weekdays <- which(data$daytype=="weekday")
+weekdaymeans <- tapply(data[weekdays,]$steps, data[weekdays,]$interval, mean)
