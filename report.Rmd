@@ -1,0 +1,69 @@
+---
+title: "Get and Clean Data Assignment 1"
+author: "Carles Llàcer"
+date: "15.10.2014"
+output: html_document
+---
+
+***Introduction***
+
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+In this data analysis we will obtain some general metrics from the (average values, daily patterns) from which we will try to obtain information. Namely, we will ask:
+* What is the mean number of steps taken in a day?
+* What is the average daily activity pattern?
+* Are there differences in activity patterns between weekdays and weekends?
+
+As there happen to be some missing values in our dataset we feel the need to repeat the first two questions questions in a second dataset without missing values that we will derive from the original one, and then decide if the third questions should be responded using the raw data or the cleaned up version.
+
+***Data***
+This analysis makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+***Loading and preprocessing the data***
+We load the .csv file into R
+
+```{r}
+data <- read.csv("activity.csv")
+
+```
+We take a look at the file to check if we need to clean something.
+```{r, echo=TRUE}
+summary(data)
+head(data)
+```
+We observe that the data is already stored in a clean and tidy way, so we don't need to perform any aditional work.
+
+As previously mentioned, however, we will perform our analysis first on the raw data and then in a new dataset without missing values. Therefore, we will construct a new collection replacing each NA value with the mean number steps taken in that same 5 minute interval.
+```{r}
+NAvalues = which(is.na(data$steps))
+intervalmean<-tapply(data$steps, as.character(data$interval), mean, na.rm=TRUE)
+data2[NAvalues,]$steps <- intervalmean[as.character(data2[NAvalues,]$interval)]
+```
+Now, if we have a look at the list of numbercounts that were missing in the original dataset we see that they have been substitued by the corresponding means:
+```{r}
+head(data[which(is.na(data$steps)),])
+head(data2[which(is.na(data$steps)),])
+```
+Thus, we have our two datasets ready to be analysed.
+
+*** What is the mean total number of steps taken each day? ***
+We will get an idea of the distribution of the activity by plotting a histogram of the stepscounts of each day.
+```{r}
+hist(tapply(data$steps, data$date, sum, na.rm=TRUE), 25, c="red")
+```
+We now obtain the mean and median of the stepcounts for each day:
+```{r}
+dailymean = tapply(data$steps, data$date, mean, na.rm=TRUE)
+dailymedian = tapply(data$steps, data$date, function(d) median(unique(d)))
+```
+
+***What is the average daily activity pattern?***
+Now we observe the pattern the activity follows each day. 
+```{r}
+intervalmean = tapply(data$steps, data$interval, mean, na.rm=TRUE)
+plot(intervalmean, 1:288)
+```
+We find also the time interval with the higher stepcount:
+```{r}
+intervalmean[which(intervalmean==max(intervalmean))]
+```
